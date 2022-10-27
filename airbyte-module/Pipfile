@@ -1,0 +1,23 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[scripts]
+server = "python main.py"
+addlicense = "licenseheaders -y 2022 -o \"IBM Corp\" -d . --ext .py  -t ./LICENSE_HEADER"
+
+[dev-packages]
+pytest = "*"
+licenseheaders = "*"
+pylint = "*"
+
+[packages]
+PyJWT = "==2.0.1"
+pyyaml = "==5.4.1"
+docker = "==5.0.3"
+pandas = "==1.4.2"
+pyarrow = "==8.0.0"
+fybrik_python_logging = "==0.1.0"
+kubernetes = "==19.15.0"
+kafka-python = "==2.0.2"

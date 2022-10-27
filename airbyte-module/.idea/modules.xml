@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/airbyte-module.iml" filepath="$PROJECT_DIR$/.idea/airbyte-module.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../kafka-to-s3/.idea/kafka-to-s3.iml" filepath="$PROJECT_DIR$/../kafka-to-s3/.idea/kafka-to-s3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../data-mesh/python/.idea/python.iml" filepath="$PROJECT_DIR$/../data-mesh/python/.idea/python.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../smartmedia-secondhalf/.idea/smartmedia-secondhalf.iml" filepath="$PROJECT_DIR$/../smartmedia-secondhalf/.idea/smartmedia-secondhalf.iml" />
+    </modules>
+  </component>
+</project>

@@ -1,0 +1,36 @@
+apiVersion: katalog.fybrik.io/v1alpha1
+kind: Asset
+metadata:
+  name: userdata
+spec:
+  secretRef: 
+    name: s3-credentials
+  details:
+    dataFormat: csv
+    connection:
+      name: file
+      file:
+        connector: "airbyte/source-file"
+        dataset_name: userdata
+        format: parquet
+        url: "https://github.com/Teradata/kylo/raw/master/samples/sample-data/parquet/userdata2.parquet"
+        provider:
+          storage: HTTPS
+  metadata:
+    name: test data
+    geography: theshire 
+    tags:
+      finance: true
+    columns:
+      - name: first_name
+        tags:
+          PII: true
+      - name: last_name
+        tags:
+          PII: true
+      - name: email
+        tags:
+          PII: true
+      - name: birthdate
+        tags:
+          PII: true

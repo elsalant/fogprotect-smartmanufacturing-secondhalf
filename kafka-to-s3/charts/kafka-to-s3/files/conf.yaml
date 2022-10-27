@@ -1,0 +1,86 @@
+{{ if .Values.assets -}}
+data:
+  {{- if .Values.labels }}
+    SUBMITTER: {{ get .Values.labels "requestedBy" | default "requester-missing" }}
+  {{- end }}
+{{- range $asset := .Values.assets }}
+  {{- if and (.args) (eq (len .args) 1) -}}
+  {{- with (index .args 0) }}
+  {{- if index . "connection" "kafka" }}
+    KAFKA_HOST: {{ .connection.kafka.kafka_bootstrap_servers }}
+    MANUFACTURING_DATA_TOPIC: {{.connection.kafka.kafka_manufacturing_topic}}
+    LOG_TOPIC: {{.connection.kafka.kafka_log_topic}}
+  {{- end }}
+  {{- if index . "connection" "s3" }}
+    S3_URL: {{ if not (contains "://" .connection.s3.endpoint)}}https://{{end}}{{ .connection.s3.endpoint }}
+    SECRET_NSPACE: {{ .connection.s3.namespace }}
+    SAFE_BUCKET: {{ .connection.s3.safeBucket }}
+    UNSAFE_BUCKET: {{ .connection.s3.unsafeBucket }}
+    SECRET_FNAME: {{ .connection.s3.credentialsFile }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+    {{- if $asset.transformations }}
+    transformations:
+    {{- $redactColumns := list -}}
+    {{- $removeColumns := list -}}
+    {{- $query := "" -}}
+    {{- $ageFilterColumns := list -}}
+    {{- $age := 0 -}}
+    {{- range $asset.transformations -}}
+      {{- if eq .name "RedactAction" -}}
+        {{- $redactColumns = .RedactAction.columns -}}
+      {{- end -}}
+      {{- if eq .name "RemoveAction" -}}
+        {{- $removeColumns = .RemoveAction.columns -}}
+      {{- end -}}
+      {{- if eq .name "FilterAction" -}}
+        {{- $query = .FilterAction.options.query -}}
+      {{- end -}}
+      {{- if eq .name "AgeFilterAction" -}}
+        {{- $ageFilterColumns = .AgeFilterAction.columns -}}
+        {{- $age = .AgeFilterAction.options.age -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $redactColumns }}
+      - action: "Redact"
+        description: "redacting columns: {{ $redactColumns }}"
+        columns:
+          {{- range $redactColumns}}
+          - {{ . }}
+          {{- end }}
+        options:
+          redactValue: "XXXXX"
+    {{- end }}
+    {{- if $removeColumns }}
+      - action: "RemoveColumns"
+        description: "removing columns: {{ $removeColumns }}"
+        columns:
+          {{- range $removeColumns}}
+          - {{ . }}
+          {{- end }}
+    {{- end }}
+    {{- if $query }}
+      - action: "Filter"
+        description: "filtering based on query"
+        options:
+          query: "{{ $query }}"
+    {{- end }}
+    {{- if $ageFilterColumns }}
+      - action: "AgeFilter"
+        description: "filtering based on age"
+        columns:
+          {{- range $ageFilterColumns}}
+          - {{ . }}
+          {{- end }}
+        {{- if $age }}
+        options:
+          age: "{{ $age }}"
+        {{- end }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+{{- else -}}
+data: []
+{{- end -}}
+

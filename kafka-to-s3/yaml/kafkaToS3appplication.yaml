@@ -1,0 +1,22 @@
+apiVersion: app.fybrik.io/v1alpha1
+kind: FybrikApplication
+metadata:
+  name: kafka2s3
+  namespace: kafka-s3
+  labels:
+    app: kafka2s3
+    requestedBy: EliotSalant
+spec:
+  selector: 
+    workloadSelector:
+      matchLabels:  
+        app: kafkaTos3
+  appInfo:
+   intent: research
+  data:
+    - dataSetID: "kafka-s3/sm-kafka-data"
+      requirements: {}
+    - dataSetID: "kafka-s3/sm-s3-data"
+      flow: write
+      requirements: {}
+

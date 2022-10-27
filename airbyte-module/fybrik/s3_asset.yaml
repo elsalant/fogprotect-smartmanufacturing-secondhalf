@@ -1,0 +1,42 @@
+apiVersion: katalog.fybrik.io/v1alpha1
+kind: Asset
+metadata:
+  name: s3-userdata
+  namespace: fybrik-airbyte-sample
+spec:
+  secretRef: 
+    name: s3-credentials
+  details:
+    dataFormat: json
+    connection:
+      name: s3
+      s3:
+        dataset: "test"
+        provider:
+          storage: "S3"
+          bucket: "smartmanufacturing-safe-bucket"
+          path_prefix: ""
+          endpoint: "https://s3.eu.cloud-object-storage.appdomain.cloud"
+        format:
+          filetype: "parquet"
+        path_pattern: "**/*.parquet"
+        schema: "{}"
+        connector: "airbyte/source-s3"
+  metadata:
+    name: test data
+    geography: theshire 
+    tags:
+      finance: true
+    columns:
+      - name: first_name
+        tags:
+          PII: true
+      - name: last_name
+        tags:
+          PII: true
+      - name: email
+        tags:
+          PII: true
+      - name: birthdate
+        tags:
+          PII: true

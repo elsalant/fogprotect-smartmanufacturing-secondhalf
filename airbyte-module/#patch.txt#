@@ -1,0 +1,222 @@
+diff --git a/abm/connector.py b/abm/connector.py
+index 7892613..5b5efd0 100644
+--- a/abm/connector.py
++++ b/abm/connector.py
+@@ -8,6 +8,10 @@ import tempfile
+ import pyarrow as pa
+ from pyarrow import json as pa_json
+ 
++MOUNTDIR = '/local'
++CHUNKSIZE = 1024
++CTRLD = '\x04'.encode()
++
+ class GenericConnector:
+     def __init__(self, config, logger, workdir):
+         if 'connection' not in config:
+@@ -49,10 +53,10 @@ class GenericConnector:
+     '''
+     Translate the name of the temporary file in the host to the name of the same file
+     in the container.
+-    For instance, it the path is '/tmp/tmp12345', return '/json/tmp12345'.
++    For instance, it the path is '/tmp/tmp12345', return '/local/tmp12345'.
+     '''
+     def name_in_container(self, path):
+-        return path.replace(self.workdir, '/json', 1)
++        return path.replace(self.workdir, MOUNTDIR, 1)
+ 
+     '''
+     Extract only the relevant data in "RECORD" lines returned by an Airbyte read operation.
+@@ -96,13 +100,13 @@ class GenericConnector:
+ 
+     '''
+     Run a docker container from the connector image.
+-    Mount the workdir on /json. Remove the container after done.
++    Mount the workdir on /local. Remove the container after done.
+     '''
+     def run_container(self, command):
+         self.logger.debug("running command: " + command)
+         try:
+             reply = self.client.containers.run(self.connector, command,
+-                volumes=[self.workdir + ':/json'], network_mode='host',
++                volumes=[self.workdir + ':' + MOUNTDIR], network_mode='host',
+                 remove=True, stream=True)
+             return self.filter_reply(reply)
+         except docker.errors.DockerException as e:
+@@ -110,6 +114,26 @@ class GenericConnector:
+                               extra={'error': str(e)})
+             return None
+ 
++    def open_socket_to_container(self, command):
++        container = self.client.containers.run(self.connector, detach=True,
++                             tty=True, stdin_open=True,
++                             volumes=[self.workdir + ':' + MOUNTDIR],
++                             command=command, remove=True)
++        # attach to the container stdin socket
++        s = container.attach_socket(params={'stdin': 1, 'stream': 1, 'stdout': 1, 'stderr': 1})
++        s._sock.setblocking(True)
++        return s, container
++
++    def close_socket_to_container(self, s, container):
++        s._sock.sendall(CTRLD)  # ctrl d to finish things up
++        s._sock.close()
++        container.stop()
++        self.client.close()
++
++    def write_to_socket_to_container(self, s, binary_textline):
++        s._sock.sendall(binary_textline)
++        s.flush()
++
+     # Given configuration, obtain the Airbyte Catalog, which includes list of datasets
+     def get_catalog(self):
+         ret = []
+@@ -227,3 +251,53 @@ class GenericConnector:
+                     dataset_file.flush()
+                     yield pa_json.read_json(dataset_file.name,
+                                       parse_options=pa_json.ParseOptions(schema))
++
++    '''
++    Creates a template catalog for write connectors
++    '''
++    def create_write_catalog(self, stream_name='testing'):
++        template = '{ \
++        "streams": [{ \
++                "sync_mode": "full_refresh", \
++                "destination_sync_mode": "overwrite", \
++                "stream": { \
++                        "name": "' + stream_name + '", \
++                        "json_schema": { \
++                                "$schema": "http://json-schema.org/draft-07/schema#", \
++                                "type": "object", \
++                                "properties": { \
++                                } \
++                        }, \
++                        "supported_sync_modes": [ \
++                                "full_refresh" \
++                        ] \
++                } \
++            }] \
++        }'
++
++        tmp_catalog = tempfile.NamedTemporaryFile(dir=self.workdir, mode='w+t')
++        tmp_catalog.writelines(template)
++        tmp_catalog.flush()
++        return tmp_catalog
++
++    def write_dataset(self, fptr, length):
++        self.logger.debug('write requested')
++        # The catalog to be provided to the write command is from a template -
++        # there is no discover on the write
++        tmp_catalog = self.create_write_catalog()
++
++        command = 'write --config ' + self.name_in_container(self.conf_file.name) + \
++                  ' --catalog ' + self.name_in_container(tmp_catalog.name)
++        s, container = self.open_socket_to_container(command)
++
++        # eg echo payload | docker run -v /Users/eliot/temp:/local -i airbyte/destination-local-json write --catalog /local/airbyte_catalog.txt --config /local/airbyte_write1.json
++        bytesToWrite = length
++        while bytesToWrite > 0:
++            readSize = CHUNKSIZE if (bytesToWrite - CHUNKSIZE) >= 0 else bytesToWrite
++            bytesToWrite -= readSize
++            payload = fptr.read(int(readSize))
++            self.write_to_socket_to_container(s, payload)
++        self.close_socket_to_container(s, container)
++        tmp_catalog.close()
++        # TODO: Need to figure out how to handle error return
++        return True
+diff --git a/abm/server.py b/abm/server.py
+index 1b73032..619054c 100644
+--- a/abm/server.py
++++ b/abm/server.py
+@@ -50,6 +50,33 @@ class ABMHttpHandler(http.server.SimpleHTTPRequestHandler):
+                 self.send_response(HTTPStatus.BAD_REQUEST)
+                 self.end_headers()
+ 
++# Have the same routine for PUT and POST
++    def do_WRITE(self):
++        logger.info('write requested')
++        with Config(self.config_path) as config:
++            asset_name = self.path.lstrip('/')
++            try:
++                asset_conf = config.for_asset(asset_name)
++                connector = GenericConnector(asset_conf, logger, self.workdir)
++            except ValueError:
++                logger.error('asset ' + asset_name + ' not found or malformed configuration')
++                self.send_response(HTTPStatus.NOT_FOUND)
++                self.end_headers()
++                return
++            # Change to allow for streaming reads
++            read_length = self.headers.get('Content-Length')
++            if connector.write_dataset(self.rfile, int(read_length)):
++                self.send_response(HTTPStatus.OK)
++            else:
++                self.send_response(HTTPStatus.BAD_REQUEST)
++            self.end_headers()
++
++    def do_PUT(self):
++        self.do_WRITE()
++
++    def do_POST(self):
++        self.do_WRITE()
++
+ class ABMHttpServer(socketserver.TCPServer):
+     def __init__(self, server_address, RequestHandlerClass,
+                  config_path, workdir):
+diff --git a/helm/abm/templates/deployment.yaml b/helm/abm/templates/deployment.yaml
+index 64f835c..b98525b 100644
+--- a/helm/abm/templates/deployment.yaml
++++ b/helm/abm/templates/deployment.yaml
+@@ -47,7 +47,7 @@ spec:
+             - name: docker-socket
+               mountPath: /var/run
+             - name: json-dir
+-              mountPath: /json
++              mountPath: /local
+         - name: docker-daemon
+           image: docker:20.10.7-dind
+           securityContext:
+@@ -56,7 +56,7 @@ spec:
+             - name: docker-socket
+               mountPath: /var/run
+             - name: json-dir
+-              mountPath: /json
++              mountPath: /local
+       volumes:
+         - name: config
+           configMap:
+diff --git a/main.py b/main.py
+index 27fb59a..e62457b 100644
+--- a/main.py
++++ b/main.py
+@@ -22,7 +22,7 @@ if __name__ == '__main__':
+         '-l', '--loglevel', type=str, default='warning', help='logging level', 
+         choices=['trace', 'info', 'debug', 'warning', 'error', 'critical'])
+     parser.add_argument(
+-        '-w', '--workdir', type=str, default='/json', help='writable directory for temporary files')
++        '-w', '--workdir', type=str, default='/local', help='writable directory for temporary files')
+     args = parser.parse_args()
+ 
+     # start the HTTP server in a separate thread
+diff --git a/sample/post.sh b/sample/post.sh
+new file mode 100755
+index 0000000..9d0315a
+--- /dev/null
++++ b/sample/post.sh
+@@ -0,0 +1,4 @@
++curl --location --request POST 'http://127.0.0.1:8080/write_test' \
++--header 'Content-Type: application/json' \
++--data-raw '{"type": "RECORD","record": {"stream": "testing","data": {"DOB": "01/02/1988","FirstName": "John","LastNAME":"Jones"},"emitted_at": 1650284493000}}
++'
+diff --git a/sample/write_config.yaml b/sample/write_config.yaml
+new file mode 100644
+index 0000000..3c24f0f
+--- /dev/null
++++ b/sample/write_config.yaml
+@@ -0,0 +1,7 @@
++data:
++  - name: "write_test"
++    connection:
++      name: file
++      file:
++        connector: airbyte/destinatio
+[On-local-json
++        destination_path: airbyte_out

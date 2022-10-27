@@ -1,0 +1,5 @@
+{"dataset": "test", "format": {"filetype": "parquet"}, "path_pattern": "**/*.parquet", "provider": {"bucket": "smartmanufacturing-safe-bucket", 
+"endpoint": 
+"https://s3.eu.cloud-object-storage.appdomain.cloud", "path_prefix": "", "storage": "S3", "aws_access_key_id": "cae190fe77674a6a9fa92863d6d4e814", 
+"aws_secret_access_key": "88e2f522b47c4224859a21fc5595dacdcf0629b7bebbf0d9"}, "schema": "{}"}
+

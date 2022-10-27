@@ -1,0 +1,20 @@
+app-uuid: 92c32bbf-3868-4c0c-8781-6f1e349b30ca
+data:
+  - name: "fybrik-airbyte-sample/userdata"
+    connection:
+      file:
+        connector: airbyte/source-file
+        dataset_name: userdata
+        format: parquet
+        provider:
+          storage: HTTPS
+        url: https://github.com/Teradata/kylo/raw/master/samples/sample-data/parquet/userdata2.parquet
+      name: file
+    format: csv
+    vault:
+      read:
+        address: http://vault.fybrik-system:8200
+        authPath: /v1/auth/kubernetes/login
+        role: module
+        secretPath: /v1/kubernetes-secrets/fake-secret?namespace=fybrik-airbyte-sample
+

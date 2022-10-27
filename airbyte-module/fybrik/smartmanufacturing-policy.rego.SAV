@@ -1,0 +1,15 @@
+package dataapi.authz
+
+import data.kubernetes.situations
+
+rule[{"name": "Only allow administrator access to unsafe assets", "action": "BlockResource"}]{
+       ss := situations[input.request.asset.namespace]["situationstatus"]
+       ss.spec.situationstatus == "unsafe-high"
+       input.request.role != "Admin"
+}
+
+rule[{}] {
+  input.action.actionType == "read"
+}
+
+

@@ -1,0 +1,27 @@
+apiVersion: katalog.fybrik.io/v1alpha1
+kind: Asset
+metadata:
+  name: sm-kafka-data
+  namespace: kafka-s3
+spec:
+  details:
+    dataFormat: json
+    connection:
+      name: kafka
+      kafka:
+        kafka_manufacturing_topic: manufacturing-events
+        kafka_log_topic: sm
+        kafka_bootstrap_servers: "kafka.fybrik-system:9092"
+        namespace: fybrik-system
+  secretRef:
+      name: ""
+  metadata:
+    name:  kafka-queue
+    geography: UK
+    tags:
+      sm: true
+    columns:
+      - name: id
+        tags:
+          PII: true
+          blocked: true

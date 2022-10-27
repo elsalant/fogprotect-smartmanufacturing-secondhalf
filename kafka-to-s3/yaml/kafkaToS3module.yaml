@@ -1,0 +1,41 @@
+# Copyright 2020 IBM Corp.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+apiVersion: app.fybrik.io/v1alpha1
+kind: FybrikModule
+metadata:
+  name: kafka2s3
+  namespace: fybrik-system
+  labels:
+    name: kafka2s3
+    version: 0.1.0 
+spec:
+  type:  service  
+  capabilities:
+    - capability: write
+      actions:
+        - name: RedactColumn
+        - name: BlockResource
+      supportedInterfaces:
+        - sink:
+            protocol: s3
+            dataformat: json
+    - capability: read
+      actions:
+        - name: RedactColumn
+        - name: BlockResource
+      supportedInterfaces:
+        - source:
+            protocol: kafka
+            dataformat: json
+  chart:
+    name: ghcr.io/elsalant/kafka-to-s3-chart:0.0.1
+    values:
+      image.tag: v1
+  statusIndicators:
+    - kind: StreamTransfer
+      successCondition: status.status == SUCCEEDED
+      failureCondition: status.status == FAILED
+      errorMessage: status.error
+

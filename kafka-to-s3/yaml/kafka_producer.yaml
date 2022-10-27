@@ -1,0 +1,12 @@
+apiVersion: batch/v1
+kind:  Job
+metadata:
+   name: kafka-producer-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: kafka-producer-container
+        image: ghcr.io/elsalant/kafka-producer:v1
+        imagePullPolicy: Always
+      restartPolicy: Never

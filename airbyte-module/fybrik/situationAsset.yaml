@@ -1,0 +1,6 @@
+apiVersion: fogprotect.els/v1alpha
+kind: Situation
+metadata:
+  name: situation-status
+spec:
+  situationstatus: safe

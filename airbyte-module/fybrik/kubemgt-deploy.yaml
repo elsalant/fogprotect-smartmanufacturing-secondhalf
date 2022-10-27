@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubemgt
+  namespace: fybrik-system
+spec:
+  selector:
+    matchLabels:
+      app: kubemgt
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kubemgt
+    spec:
+      containers:
+      - name: kube-mgmt
+        image: openpolicyagent/kube-mgmt:0.11
+        args:
+        - --require-policy-label
+        - --policies=fybrik-system
+        - --replicate=fogprotect.els/v1alpha/situations

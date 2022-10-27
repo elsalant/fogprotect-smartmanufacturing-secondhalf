@@ -1,0 +1,29 @@
+apiVersion: katalog.fybrik.io/v1alpha1
+kind: Asset
+metadata:
+  name: sm-s3-data
+  namespace: kafka-s3
+spec:
+  details:
+    dataFormat: json
+    connection:
+      name: s3
+      s3:
+        endpoint: "http://192.168.1.248:9000"
+        safeBucket: "smartmanufacturing-safe-bucket"
+        unsafeBucket: "smartmanufacturing-unsafe-bucket"
+        namespace: fybrik-system
+        credentialsFile: credentials
+  secretRef:
+    name: credentials
+    namespace: fybrik-system
+  metadata:
+    name:  s3-store
+    geography: UK
+    tags:
+      sm: true
+    columns:
+      - name: id
+        tags:
+          PII: true
+          blocked: true

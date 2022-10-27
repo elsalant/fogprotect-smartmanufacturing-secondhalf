@@ -1,0 +1,75 @@
+apiVersion: app.fybrik.io/v1alpha1
+kind: FybrikModule
+metadata:
+  name: airbyte-module
+  namespace: fybrik-system
+  labels:
+    name: airbyte-module
+    version: latest # semantic version
+spec:
+  type: service
+  chart:
+    name: ghcr.io/elsalant/airbyte-module-chart:0.0.0-els
+    values:
+      image.tag: 0.0.1
+  capabilities:
+    - capability: read
+      scope: workload
+      supportedInterfaces:
+        - source:
+            protocol: s3
+            dataformat: json
+    - capability: read
+      actions:
+        - name: RedactColumn
+        - name: BlockResource
+        - name: AllowResource
+      scope: workload 
+      api:
+        connection:
+          name: fybrik-arrow-flight
+          fybrik-arrow-flight:
+            hostname: "{{ .Release.Name }}.{{ .Release.Namespace }}"
+            port: "80"
+            scheme: grpc
+      supportedInterfaces:
+        - source:
+            protocol: postgres
+            dataformat: csv
+        - source:
+            protocol: mysql
+            dataformat: csv
+        - source:
+            protocol: google-sheets
+            dataformat: csv
+        - source:
+            protocol: us-census
+            dataformat: csv
+        - source:
+            protocol: file
+            dataformat: csv
+    - capability: read
+      scope: workload
+      api:
+        connection:
+          name: http
+          http:
+            hostname: "{{ .Release.Name }}.{{ .Release.Namespace }}"
+            port: "79"
+            scheme: grpc
+      supportedInterfaces:
+        - source:
+            protocol: postgres
+            dataformat: csv
+        - source:
+            protocol: mysql
+            dataformat: csv
+        - source:
+            protocol: google-sheets
+            dataformat: csv
+        - source:
+            protocol: us-census
+            dataformat: csv
+        - source:
+            protocol: file
+            dataformat: csv

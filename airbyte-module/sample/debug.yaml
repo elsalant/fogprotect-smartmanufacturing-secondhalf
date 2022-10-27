@@ -1,0 +1,25 @@
+app-uuid: d38b62bb-1c98-4090-a3cc-a2ee4143ca99
+data:
+  - name: "fybrik-airbyte-sample/s3-userdata"
+    connection:
+      name: s3
+      s3:
+        connector: airbyte/source-s3
+        dataset: test
+        format:
+          filetype: csv
+        path_pattern: '*.csv'
+        provider:
+          bucket: safe-bucket
+          endpoint: https://s3.eu.cloud-object-storage.appdomain.cloud
+          path_prefix: ""
+          storage: S3
+        schema: '{}'
+    format: json
+    vault:
+      read:
+        address: http://vault.fybrik-system:8200
+        authPath: /v1/auth/kubernetes/login
+        role: module
+        secretPath: /v1/kubernetes-secrets/s3-credentials?namespace=fybrik-airbyte-sample
+

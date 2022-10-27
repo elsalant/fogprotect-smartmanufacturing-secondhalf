@@ -1,0 +1,9 @@
+FROM python:3.8-slim
+WORKDIR /app
+COPY kafka_producer.py kafka_producer.py
+COPY module module
+RUN pip install -r module/requirements_producer.txt
+#ENTRYPOINT ["python3"]
+ENV PYTHONUNBUFFERED=1
+CMD ["python3", "./kafka_producer.py"]
+
