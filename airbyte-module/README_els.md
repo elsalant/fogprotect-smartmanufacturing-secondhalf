@@ -10,7 +10,7 @@ in the README (start the minioserver, kubectl apply -f kafka_producer.yaml)
 Will always write to the quarantined bucket if the situationstatus is anything other than "safe"
 (See /home/salant/fogprotect-kafka-to-s3/python/kafkaToS3.py)
 5. Start the module from the toplevel, airbyte-module directory by:
-kubectl apply -f module.yaml
+kubectl apply -f module.yaml 
 from fybrik directory:
 kubectl apply -f application.yaml
 6. To read the data:
