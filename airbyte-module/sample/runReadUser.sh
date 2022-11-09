@@ -1,0 +1,1 @@
+curl localhost:2020/s3-userdata -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZXMiOiJVc2VyIiwibmFtZSI6IkVsaW90IFNhbGFudCIsIm9yZyI6IklCTSJ9.mzIlasul-sTBqOfkILUJKsaDpUa88QIOHObO-FHmkYE"
