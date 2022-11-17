@@ -10,6 +10,11 @@ in the README (start the minioserver, kubectl apply -f kafka_producer.yaml)
   kubectl create ns fybrik-airbyte-sample
 #/home/salant/airbyte-module/sample/curlUpdateOPApolicy.sh
 fybrik/installPolicy.sh
+NOTE:  If this does not work, use the curlUpdateOPApolicy.sh script.  If curlDeletePolicies.sh is used, then
+the OPA connector might break and the blueprint will not come up.  In that case:
+helm delete fybrik -n fybrik-system
+helm install fybrik fybrik-charts/fybrik -n fybrik-system --version 1.0.1  --wait
+Then reinstall the policies with the curl command and reapply the situationstatus file.
 4. Note that the write policies are inside the module 
 Will always write to the quarantined bucket if the situationstatus is anything other than "safe"
 (See /home/salant/fogprotect-kafka-to-s3/python/kafkaToS3.py)
