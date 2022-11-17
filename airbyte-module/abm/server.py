@@ -43,7 +43,8 @@ class ABMHttpHandler(http.server.SimpleHTTPRequestHandler):
         if (action == 'BlockResource'):
             self.send_response(HTTPStatus.FORBIDDEN)
             self.end_headers()
-            self.wfile.write(b'Request blocked!')
+ #           self.wfile.write(b'\nRequest blocked!\n')
+            self.wfile.write(b'\n\033[1;31m Request blocked!\033[00m\n')
             logToKafka(self, 'BlockURL', policy, self.headers.get('Host'))
             return
         with Config(self.config_path) as config:
@@ -79,7 +80,7 @@ class ABMHttpHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(HTTPStatus.FORBIDDEN)
             self.end_headers()
             logToKafka(self, 'BlockURL', policy, self.headers.get('Host'))
-            return('Request blocked!')
+            return('\n\033[1;31m Request blocked!\033[00m\n')
         with Config(self.config_path) as config:
             asset_name = self.path.lstrip('/')
             try:
@@ -89,7 +90,7 @@ class ABMHttpHandler(http.server.SimpleHTTPRequestHandler):
                 logger.error('asset ' + asset_name + ' not found or malformed configuration')
                 self.send_response(HTTPStatus.NOT_FOUND)
                 self.end_headers()
-                self.wfile.write(b'Request blocked!')
+                self.wfile.write(b'\nRequest blocked!\n')
                 return
             # Change to allow for chunking
             read_length = self.headers.get('Content-Length')

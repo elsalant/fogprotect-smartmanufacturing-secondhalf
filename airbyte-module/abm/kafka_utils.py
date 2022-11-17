@@ -89,11 +89,11 @@ def logToKafka(request, action, policy, url):
     if (role == 'Missing value'):
         role = "['ERROR NO ROLE!']"
     # role *should* be a string representation of an array, and therefore should not be surrounded by "
-    jString = "{\"user\": \"" + user + "\"," + \
-              "\"role\": " + role + "," + \
+    jString = "{\"user\": \"" + str(user) + "\"," + \
+              "\"role\": " + str(role) + "," + \
               "\"org\": \"" + organization + "\"," + \
-              "\"URL\": \"" + url + "\"," + \
-              "\"Reason\": \"" + policy + "\"," + \
+              "\"URL\": \"" + str(url) + "\"," + \
+              "\"Reason\": \"" + str(policy) + "\"," + \
               "\"Timestamp\": \"" + str(timeOut) + "\"}"
     jStringFormatted = jString.replace("'", "\"")
     logging.info('logging to Kafka: ' + jString)
