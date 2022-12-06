@@ -1,4 +1,4 @@
-apiVersion: katalog.fybrik.io/v1alpha1
+apiVersion: katalog.fybrik.io/v1beta1
 kind: Asset
 metadata:
   name: sm-s3-data

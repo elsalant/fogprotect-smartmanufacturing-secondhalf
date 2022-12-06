@@ -16,14 +16,14 @@ kubectl create namespace kafka-s3
 git pull https://github.com/elsalant/fogprotect-kafka-to-s3.git
 1. Install the policy:  
 \<ROOT>/scripts/applyPolicy.sh
-1. Edit \<ROOT>/yaml/s3-credentials.yaml to input the correct S3 tokens
+1. Edit \<ROOT>/yaml/minio-credentials.yaml to input the correct S3 tokens
 1. Apply the S3 secrets and permissions  
 \<ROOT>/scripts/deployS3secrets.sh 
 1. kubectl edit cm cluster-metadata -n fybrik-system
 and change theshire to UK
 1. kubectl apply -f https://raw.githubusercontent.com/datashim-io/datashim/master/release-tools/manifests/dlf.yaml
 1. kubectl apply -f \<ROOT>/yaml/kafka_asset.yaml  
-    kubectl apply -f \<ROOT>/yaml/s3_asset.yaml
+    kubectl apply -f \<ROOT>/yaml/s3_minio_asset.yaml
 1. Edit s3-account.yaml and configure the endpoint for your s3 store, then apply:
 kubectl apply -f s3-account.yaml
 1. Apply the module
@@ -74,3 +74,21 @@ helm push /tmp/kafka-to-s3-chart-0.0.1.tgz oci://ghcr.io/elsalant
 4. The FHIR server can be queried directly by:
  - kubectl port-forward svc/ibmfhir 9443:9443 -n fybrik-system  
  - curl -k -u 'fhiruser:change-password' 'https://127.0.0.1:9443/fhir-server/api/v4/Patient'
+
+To create a pod that you can use as a Kafka client run the following commands:
+
+    kubectl run kafka-client --restart='Never' --image docker.io/bitnami/kafka:3.3.1-debian-11-r11 --namespace fybrik-system --command -- sleep infinity
+    kubectl exec --tty -i kafka-client --namespace fybrik-system -- bash
+
+    PRODUCER:
+        kafka-console-producer.sh \
+            
+            --broker-list kafka-0.kafka-headless.fybrik-system.svc.cluster.local:9092 \
+            --topic test
+
+    CONSUMER:
+        kafka-console-consumer.sh \
+            
+            --bootstrap-server kafka.fybrik-system.svc.cluster.local:9092 \
+            --topic test \
+            --from-beginning

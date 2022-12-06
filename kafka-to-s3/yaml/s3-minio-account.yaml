@@ -1,0 +1,10 @@
+apiVersion: app.fybrik.io/v1beta1
+kind: FybrikStorageAccount
+metadata:
+  name: account-eliot
+  namespace: fybrik-system
+spec:
+  endpoint: "http://localhost:9000"
+  secretRef: credentials
+  region: UK
+  id: heir
