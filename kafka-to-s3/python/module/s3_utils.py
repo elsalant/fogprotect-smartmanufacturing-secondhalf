@@ -6,6 +6,7 @@ import tempfile
 import pandas as pd
 import json
 import logging
+from datetime import datetime
 
 BUCKET_PREFIX = '-fogprotect-'
 PARQUET_SUFFIX = '.parquet'
@@ -73,7 +74,7 @@ class S3utils:
             self.logger.info('No file being written out - bad input')
             return None
         self.write_to_bucket(bucketName, tempFile, fName)
-        logStr = 'information written to bucket ' + bucketName + ' as ' + fName
+        logStr = datetime.now()+ ': information written to bucket ' + bucketName + ' as ' + fName
         self.logger.info(logStr)
         return None
 

@@ -31,6 +31,21 @@ kubectl apply -f \<ROOT>/yaml/kafkaToS3module.yaml
 1. Apply the application - note that the name (or JWT) for the requester is in the label.requestedBy field!  
 kubectl apply -f \<ROOT>/yaml/kafakToS3application.yaml
 
+## To run the event simulator (producer):
+cd /home/salant/fogprotect-kafka-to-s3/yaml
+Check to see if there is a stopped job:
+kubectl get jobs
+
+## To read the quarantined data:
+In the airbyte-module/sample directory:
+./listQuarentinedFiles.sh
+
+ 
+If you see a “kafka-producer-job” with 1/1 completions, then delete it as follows:
+kubectl delete job kafka-producer-job
+Run the producer:
+kubectl apply -f kafka_producer.yaml
+
 ### Test
 - a) Send events to the Kafka queue  
 kubectl apply -f kafka_producer.yaml 

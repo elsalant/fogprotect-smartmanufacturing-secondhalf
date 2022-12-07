@@ -6,7 +6,9 @@ from json import dumps
 from datetime import datetime
 import time
 
-SLEEPTIME = 20  # seconds
+SLEEPTIME = 30  # seconds
+NUM_WRITES = 30
+
 TEST = False
 if TEST:
     KAFKA_HOST = 'localhost:9092'
@@ -31,7 +33,7 @@ try:
 except Exception as e:
     print('Connecting to Kafka failed!')
     print(e)
-for i in range(9):
+for i in range(NUM_WRITES):
     outString = '''
     {
         "zone": {
